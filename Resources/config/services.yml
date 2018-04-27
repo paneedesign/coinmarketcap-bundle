@@ -1,0 +1,8 @@
+parameters:
+    ped_coin_market_cap.endpoint: "https://api.coinmarketcap.com/v1/"
+    ped_coin_market_cap.content_type: "application/json"
+        
+services:
+    ped_coin_market_cap.handler:
+        class: PaneeDesign\CoinMarketCapBundle\Handler\PedCoinMarketCapBundleHandler
+        arguments: ["%ped_coin_market_cap.endpoint%", "%ped_coin_market_cap.content_type%"]

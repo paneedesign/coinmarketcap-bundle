@@ -1,0 +1,24 @@
+{
+  "name": "paneedesign/coinmarketcap-bundle",
+  "description": "A Symfony Bundle for CoinMarketCap APIs",
+  "keywords": ["coinmarketcap", "exchange", "crypto", "client", "symfony", "bundle"],
+  "type": "symfony-bundle",
+  "require": {
+    "ext-curl": "*",
+    "ext-json": "*",
+    "php": ">=7.0.0",
+    "mashape/unirest-php": "^3.0"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Vittorio Minacori",
+      "homepage": "https://github.com/vittominacori"
+    }
+  ],
+  "autoload": {
+    "psr-4": { "PaneeDesign\\CoinMarketCapBundle\\": "" },
+    "exclude-from-classmap": ["/Tests/"]
+  },
+  "minimum-stability": "dev"
+}
