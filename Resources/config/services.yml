@@ -1,5 +1,5 @@
 parameters:
-    ped_coin_market_cap.endpoint: "https://api.coinmarketcap.com/v1/"
+    ped_coin_market_cap.endpoint: "https://api.coinmarketcap.com/v2/"
     ped_coin_market_cap.content_type: "application/json"
         
 services:

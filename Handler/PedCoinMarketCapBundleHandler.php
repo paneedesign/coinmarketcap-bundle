@@ -33,6 +33,15 @@ class PedCoinMarketCapBundleHandler
     // public methods
 
     /**
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getListings()
+    {
+        return $this->get('listings');
+    }
+
+    /**
      * @param array $params (Optional parameters "convert", "limit", "start")
      * @return mixed
      * @throws Exception
@@ -43,7 +52,7 @@ class PedCoinMarketCapBundleHandler
     }
 
     /**
-     * @param string $id (like "bitcoin", "ethereum")
+     * @param integer $id
      * @param array $params (Optional parameters "convert")
      * @return mixed
      * @throws Exception
