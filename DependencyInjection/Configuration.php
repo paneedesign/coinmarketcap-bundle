@@ -19,13 +19,10 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('ped_coin_market_cap');
-
         $rootNode
             ->children()
-            ->scalarNode('endpoint')->end()
-            ->scalarNode('content_type')->end()
+            ->scalarNode('api_key')->end()
             ->end();
-
         return $treeBuilder;
     }
 }

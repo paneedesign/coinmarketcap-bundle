@@ -17,8 +17,7 @@
     }
   ],
   "autoload": {
-    "psr-4": { "PaneeDesign\\CoinMarketCapBundle\\": "" },
-    "exclude-from-classmap": ["/Tests/"]
+    "psr-4": { "PaneeDesign\\CoinMarketCapBundle\\": "" }
   },
   "minimum-stability": "dev"
 }

@@ -1,13 +1,14 @@
 # CoinMarketCap for Symfony
 
-A Symfony Bundle for [CoinMarketCap](https://coinmarketcap.com/api/) APIs
+A Symfony bundle for [CoinMarketCap Professional API](https://pro.coinmarketcap.com/api/v1)
+
+NOTES: only FREE apis. Check features list [here](https://pro.coinmarketcap.com/features).
 
 ## Install
 
 ```
 composer require paneedesign/coinmarketcap-bundle
 ```
-
 
 ## Usage
 
@@ -35,280 +36,334 @@ class AppKernel extends Kernel
 }
 ```
 
+### Configure
+
+Add your Api Key in your parameters.yml
+
+```yaml
+ped_coin_market_cap.api_key: "yourApiKey"
+```
+
 ### Create client
 
 ```php
-$coinmarketcap = $this->get('ped_coin_market_cap.handler');
+$cmc = $this->get('ped_coin_market_cap.api');
 ```
 
-### Call APIs
+## Call APIs
 
-#### Listings
+### Cryptocurrency
 
-Description:
-+ This method displays all active cryptocurrency listings in one call. Use the "id" field on the Ticker endpoint to query more information on a specific cryptocurrency.
+#### map
+
+Returns a paginated list of all cryptocurrencies by CoinMarketCap ID. We recommend using this convenience endpoint to lookup and utilize our unique cryptocurrency id across all endpoints as typical identifiers like ticker symbols can match multiple cryptocurrencies and change over time. As a convenience you may pass a comma-separated list of cryptocurrency symbols as symbol to filter this list to only those you require.
+
+Params:
++ (string) listing_status - Default "active" - Only active coins are returned by default. Pass 'inactive' to get a list of coins that are no longer active. - Valid values: "active" "inactive".
++ (integer >= 1) start - Default 1 - Optionally offset the start (1-based index) of the paginated list of items to return.
++ (integer [1 .. 5000]) limit - Default 100 - Optionally specify the number of results to return. Use this parameter and the "start" parameter to determine your own pagination size.
++ (string) symbol - Optionally pass a comma-separated list of cryptocurrency symbols to return CoinMarketCap IDs for. If this option is passed, other options will be ignored.
 
 ```php
-$coinmarketcap->getListings();
+$response = $cmc->cryptocurrency()->map(['limit' => 3]);
 ```
-
-result: 
 
 ```json
 {
+  "status": {
+    "timestamp": "2018-09-18T14:28:34.173Z",
+    "error_code": 0,
+    "error_message": null,
+    "elapsed": 7,
+    "credit_count": 1
+  },
   "data": [
     {
       "id": 1,
       "name": "Bitcoin",
       "symbol": "BTC",
-      "website_slug": "bitcoin"
+      "slug": "bitcoin",
+      "is_active": 1,
+      "first_historical_data": "2013-04-28T18:47:21.000Z",
+      "last_historical_data": "2018-09-18T14:24:00.000Z"
     },
     {
       "id": 2,
       "name": "Litecoin",
       "symbol": "LTC",
-      "website_slug": "litecoin"
+      "slug": "litecoin",
+      "is_active": 1,
+      "first_historical_data": "2013-04-28T18:47:22.000Z",
+      "last_historical_data": "2018-09-18T14:24:00.000Z"
     },
     {
       "id": 3,
       "name": "Namecoin",
       "symbol": "NMC",
-      "website_slug": "namecoin"
+      "slug": "namecoin",
+      "is_active": 1,
+      "first_historical_data": "2013-04-28T18:47:22.000Z",
+      "last_historical_data": "2018-09-18T14:24:00.000Z"
+    }
+  ]
+}
+```
+
+#### info
+
+Returns all static metadata for one or more cryptocurrencies including name, symbol, logo, and its various registered URLs.
+
+Params:
++ (string) id - One or more comma-separated cryptocurrency CoinMarketCap IDs. Example: 1,2.
++ (string) symbol - Alternatively pass one or more comma-separated cryptocurrency symbols. Example: "BTC,ETH". At least one "id" or "symbol" is required.
+
+```php
+$response = $cmc->cryptocurrency()->info(['id' => 1]);
+```
+
+```json
+{
+  "status": {
+    "timestamp": "2018-09-18T14:23:35.891Z",
+    "error_code": 0,
+    "error_message": null,
+    "elapsed": 8,
+    "credit_count": 1
+  },
+  "data": {
+    "1": {
+      "urls": {
+        "website": [
+          "https://bitcoin.org/"
+        ],
+        "twitter": [
+          
+        ],
+        "reddit": [
+          "https://reddit.com/r/bitcoin"
+        ],
+        "message_board": [
+          "https://bitcointalk.org"
+        ],
+        "announcement": [
+          
+        ],
+        "chat": [
+          
+        ],
+        "explorer": [
+          "https://blockchain.info/",
+          "https://live.blockcypher.com/btc/",
+          "https://blockchair.com/bitcoin/blocks"
+        ],
+        "source_code": [
+          "https://github.com/bitcoin/"
+        ]
+      },
+      "logo": "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png",
+      "id": 1,
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "slug": "bitcoin",
+      "date_added": "2013-04-28T00:00:00.000Z",
+      "tags": [
+        "mineable"
+      ],
+      "category": "coin"
+    }
+  }
+}
+```
+
+#### listings/latest
+
+Get a paginated list of all cryptocurrencies with latest market data. You can configure this call to sort by market cap or another market ranking field. Use the "convert" option to return market values in multiple fiat and cryptocurrency conversions in the same call.
+
+Params: 
++ (integer >= 1) start - Default 1 - Optionally offset the start (1-based index) of the paginated list of items to return.
++ (integer [1 .. 5000]) limit - Default 100 - Optionally specify the number of results to return. Use this parameter and the "start" parameter to determine your own pagination size.
++ (string) convert - Default "USD" - Optionally calculate market quotes in up to 32 currencies at once by passing a comma-separated list of cryptocurrency or fiat currency symbols. Each additional convert option beyond the first requires an additional call credit. A list of supported fiat options can be found [here](https://pro.coinmarketcap.com/api/v1#section/Standards-and-Conventions). Each conversion is returned in its own "quote" object.
++ (string) sort - Default "market_cap" - What field to sort the list of cryptocurrencies by. - Valid values: "name" "symbol" "date_added" "market_cap" "price" "circulating_supply" "total_supply" "max_supply" "num_market_pairs" "volume_24h" "percent_change_1h" "percent_change_24h" "percent_change_7d".
++ (string) sort_dir - The direction in which to order cryptocurrencies against the specified sort. - Valid values: "asc" "desc".
++ (string) cryptocurrency_type - Default "all" - The type of cryptocurrency to include. - Valid values: "all" "coins" "tokens".
+
+```php
+$response = $cmc->cryptocurrency()->listingsLatest(['limit' => 3, 'convert' => 'EUR']);
+```
+
+```json
+{
+  "status": {
+    "timestamp": "2018-09-18T14:19:30.058Z",
+    "error_code": 0,
+    "error_message": null,
+    "elapsed": 5,
+    "credit_count": 1
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "slug": "bitcoin",
+      "circulating_supply": 17274437,
+      "total_supply": 17274437,
+      "max_supply": 21000000,
+      "date_added": "2013-04-28T00:00:00.000Z",
+      "num_market_pairs": 6196,
+      "cmc_rank": 1,
+      "last_updated": "2018-09-18T14:18:20.000Z",
+      "quote": {
+        "EUR": {
+          "price": 5453.483411,
+          "volume_24h": 3620113441.55994701385498046875,
+          "percent_change_1h": 0.23269,
+          "percent_change_24h": -0.4964,
+          "percent_change_7d": 1.0169,
+          "market_cap": 94205855621.49392,
+          "last_updated": "2018-09-18T14:15:00.000Z"
+        }
+      }
     },
     {
-      "id": 4,
-      "name": "Terracoin",
-      "symbol": "TRC",
-      "website_slug": "terracoin"
-    },
-    (...)
-  ],
-  "metadata": {
-    "timestamp": 1525352247,
-    "num_cryptocurrencies": 1604,
-    "error": null
-  }
-}
-```
-
-
-#### Ticker
-
-Description:
-+ This method displays cryptocurrency ticker data in order of rank. The maximum number of results per call is 100. Pagination is possible by using the start and limit parameters.
-
-Optional parameters:
-+ (int) start - return results from rank [start] and above (default is 1)
-+ (int) limit - return a maximum of [limit] results (default is 100; max is 100)
-+ (string) convert - return pricing info in terms of another currency. Valid fiat currency values are: "AUD", "BRL", "CAD", "CHF", "CLP", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PKR", "PLN", "RUB", "SEK", "SGD", "THB", "TRY", "TWD", "ZAR". Valid cryptocurrency values are: "BTC", "ETH" "XRP", "LTC", and "BCH"
-
-```php
-$coinmarketcap->getTicker(['convert' => 'EUR', 'start' => 10, 'limit' => 10]);
-```
-
-result: 
-
-```json
-{
-  "data": {
-    "131": {
-      "id": 131,
-      "name": "Dash",
-      "symbol": "DASH",
-      "website_slug": "dash",
-      "rank": 13,
-      "circulating_supply": 8044183.0,
-      "total_supply": 8044183.0,
-      "max_supply": 18900000.0,
-      "quotes": {
-        "USD": {
-          "price": 487.954,
-          "volume_24h": 109381000.0,
-          "market_cap": 3925191193.0,
-          "percent_change_1h": 1.17,
-          "percent_change_24h": 3.58,
-          "percent_change_7d": 3.28
-        },
-        "EUR": {
-          "price": 407.240552952,
-          "volume_24h": 91288070.028,
-          "market_cap": 3275917468.0,
-          "percent_change_1h": 1.17,
-          "percent_change_24h": 3.58,
-          "percent_change_7d": 3.28
-        }
-      },
-      "last_updated": 1525351442
-    },
-    "328": {
-      "id": 328,
-      "name": "Monero",
-      "symbol": "XMR",
-      "website_slug": "monero",
-      "rank": 12,
-      "circulating_supply": 15993246.0,
-      "total_supply": 15993246.0,
+      "id": 1027,
+      "name": "Ethereum",
+      "symbol": "ETH",
+      "slug": "ethereum",
+      "circulating_supply": 102035628.8739,
+      "total_supply": 102035628.8739,
       "max_supply": null,
-      "quotes": {
-        "USD": {
-          "price": 246.453,
-          "volume_24h": 83299300.0,
-          "market_cap": 3941583393.0,
-          "percent_change_1h": 1.23,
-          "percent_change_24h": 1.17,
-          "percent_change_7d": -5.47
-        },
+      "date_added": "2015-08-07T00:00:00.000Z",
+      "num_market_pairs": 4306,
+      "cmc_rank": 2,
+      "last_updated": "2018-09-18T14:18:33.000Z",
+      "quote": {
         "EUR": {
-          "price": 205.686716364,
-          "volume_24h": 69520596.1884,
-          "market_cap": 3289598201.0,
-          "percent_change_1h": 1.23,
-          "percent_change_24h": 1.17,
-          "percent_change_7d": -5.47
+          "price": 180.34037,
+          "volume_24h": 1875203831.40084,
+          "percent_change_1h": 0.20369,
+          "percent_change_24h": -2.0057,
+          "percent_change_7d": 10.34469,
+          "market_cap": 18401143121.22748,
+          "last_updated": "2018-09-18T14:15:00.000Z"
         }
-      },
-      "last_updated": 1525351452
-    },
-    (...)
-    "1958": {
-      "id": 1958,
-      "name": "TRON",
-      "symbol": "TRX",
-      "website_slug": "tron",
-      "rank": 10,
-      "circulating_supply": 65748111645.0,
-      "total_supply": 100000000000.0,
-      "max_supply": null,
-      "quotes": {
-        "USD": {
-          "price": 0.0879502,
-          "volume_24h": 614788000.0,
-          "market_cap": 5782559569.0,
-          "percent_change_1h": 0.69,
-          "percent_change_24h": -3.11,
-          "percent_change_7d": 26.69
-        },
-        "EUR": {
-          "price": 0.0734021815,
-          "volume_24h": 513094687.344,
-          "market_cap": 4826054825.0,
-          "percent_change_1h": 0.69,
-          "percent_change_24h": -3.11,
-          "percent_change_7d": 26.69
-        }
-      },
-      "last_updated": 1525351455
-    }
-  },
-  "metadata": {
-    "timestamp": 1525351470,
-    "num_cryptocurrencies": 1604,
-    "error": null
-  }
-}
-```
-
-
-#### Ticker (Specific Currency)
-
-Description:
-+ This method displays ticker data for a specific cryptocurrency. Use the "id" field from the getListings method as param.
-
-Optional parameters:
-+ (string) convert - return pricing info in terms of another currency. Valid fiat currency values are: "AUD", "BRL", "CAD", "CHF", "CLP", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PKR", "PLN", "RUB", "SEK", "SGD", "THB", "TRY", "TWD", "ZAR". Valid cryptocurrency values are: "BTC", "ETH" "XRP", "LTC", and "BCH"
-
-```php
-$coinmarketcap->getTickerById(1, ['convert' => 'EUR']);
-```
-
-result: 
-
-```json
-{
-  "data": {
-    "id": 1,
-    "name": "Bitcoin",
-    "symbol": "BTC",
-    "website_slug": "bitcoin",
-    "rank": 1,
-    "circulating_supply": 17012850.0,
-    "total_supply": 17012850.0,
-    "max_supply": 21000000.0,
-    "quotes": {
-      "USD": {
-        "price": 9265.88,
-        "volume_24h": 8084730000.0,
-        "market_cap": 157639026558.0,
-        "percent_change_1h": 0.67,
-        "percent_change_24h": 1.33,
-        "percent_change_7d": 4.7
-      },
-      "EUR": {
-        "price": 7733.19225744,
-        "volume_24h": 6747418641.24,
-        "market_cap": 131563639897.0,
-        "percent_change_1h": 0.67,
-        "percent_change_24h": 1.33,
-        "percent_change_7d": 4.7
       }
     },
-    "last_updated": 1525351771
+    {
+      "id": 52,
+      "name": "XRP",
+      "symbol": "XRP",
+      "slug": "ripple",
+      "circulating_supply": 39809069106,
+      "total_supply": 99991841593,
+      "max_supply": 100000000000,
+      "date_added": "2013-08-04T00:00:00.000Z",
+      "num_market_pairs": 205,
+      "cmc_rank": 3,
+      "last_updated": "2018-09-18T14:19:09.000Z",
+      "quote": {
+        "EUR": {
+          "price": 0.27389,
+          "volume_24h": 395866029.038812,
+          "percent_change_1h": 4.00389,
+          "percent_change_24h": 13.3679,
+          "percent_change_7d": 18.0235,
+          "market_cap": 10903443380.678461,
+          "last_updated": "2018-09-18T14:15:00.000Z"
+        }
+      }
+    }
+  ]
+}
+```
+
+#### quotes/latest
+
+Get the latest market quote for 1 or more cryptocurrencies. Use the "convert" option to return market values in multiple fiat and cryptocurrency conversions in the same call.
+
+Params:
++ (string) id - One or more comma-separated cryptocurrency CoinMarketCap IDs. Example: 1,2.
++ (string) symbol - Alternatively pass one or more comma-separated cryptocurrency symbols. Example: "BTC,ETH". At least one "id" or "symbol" is required.
++ (string) convert - Default "USD" - Optionally calculate market quotes in up to 32 currencies at once by passing a comma-separated list of cryptocurrency or fiat currency symbols. Each additional convert option beyond the first requires an additional call credit. A list of supported fiat options can be found [here](https://pro.coinmarketcap.com/api/v1#section/Standards-and-Conventions). Each conversion is returned in its own "quote" object.
+
+```php
+$response = $cmc->cryptocurrency()->quotesLatest(['id' => 1, 'convert' => 'EUR']);
+```
+
+```json
+{
+  "status": {
+    "timestamp": "2018-09-18T14:08:03.988Z",
+    "error_code": 0,
+    "error_message": null,
+    "elapsed": 5,
+    "credit_count": 1
   },
-  "metadata": {
-    "timestamp": 1525351800,
-    "error": null
+  "data": {
+    "1": {
+      "id": 1,
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "slug": "bitcoin",
+      "circulating_supply": 17274400,
+      "total_supply": 17274400,
+      "max_supply": 21000000,
+      "date_added": "2013-04-28T00:00:00.000Z",
+      "num_market_pairs": 6196,
+      "cmc_rank": 1,
+      "last_updated": "2018-09-18T14:06:25.000Z",
+      "quote": {
+        "EUR": {
+          "price": 5445.68744,
+          "volume_24h": 3655275984.03052,
+          "percent_change_1h": 0.3710,
+          "percent_change_24h": -0.6898,
+          "percent_change_7d": 0.9559,
+          "market_cap": 94070983274.072128,
+          "last_updated": "2018-09-18T14:05:00.000Z"
+        }
+      }
+    }
   }
 }
 ```
 
-sample error response:
+### GlobalMetrics
 
-```json
-{
-    "data": null, 
-    "metadata": {
-        "timestamp": 1525137187, 
-        "error": "id not found"
-    }
-}
-```
+#### quotes/latest
 
+Get the latest quote of aggregate market metrics. Use the "convert" option to return market values in multiple fiat and cryptocurrency conversions in the same call.
 
-#### Global Data
-
-Description: 
-+ This methid displays the global data found at the top of coinmarketcap.com.
-
-Optional parameters:
-+ (string) convert - return pricing info in terms of another currency. Valid fiat currency values are: "AUD", "BRL", "CAD", "CHF", "CLP", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PKR", "PLN", "RUB", "SEK", "SGD", "THB", "TRY", "TWD", "ZAR". Valid cryptocurrency values are: "BTC", "ETH" "XRP", "LTC", and "BCH"
+Params:
++ (string) convert - OPTIONAL - default "USD" - Optionally calculate market quotes in up to 32 currencies at once by passing a comma-separated list of cryptocurrency or fiat currency symbols. Each additional convert option beyond the first requires an additional call credit. A list of supported fiat options can be found [here](https://pro.coinmarketcap.com/api/v1#section/Standards-and-Conventions). Each conversion is returned in its own "quote" object.
 
 ```php
-$coinmarketcap->getGlobalData(['convert' => 'EUR']);
+$response = $cmc->globalMetrics()->quotesLatest(['convert' => 'EUR']);
 ```
-
-result: 
 
 ```json
 {
+  "status": {
+    "timestamp": "2018-09-18T14:02:00.100Z",
+    "error_code": 0,
+    "error_message": null,
+    "elapsed": 4,
+    "credit_count": 1
+  },
   "data": {
-    "active_cryptocurrencies": 1604,
-    "active_markets": 10627,
-    "bitcoin_percentage_of_market_cap": 35.68,
-    "quotes": {
-      "USD": {
-        "total_market_cap": 442240921543.0,
-        "total_volume_24h": 26428639806.0
-      },
+    "active_cryptocurrencies": 1969,
+    "active_market_pairs": 14052,
+    "active_exchanges": 219,
+    "eth_dominance": 10.7,
+    "btc_dominance": 55.3,
+    "quote": {
       "EUR": {
-        "total_market_cap": 369088966229.0,
-        "total_volume_24h": 22057025638.0
+        "total_market_cap": 169987221659,
+        "total_volume_24h": 11805377386,
+        "last_updated": "2018-09-18T14:00:00.000Z"
       }
     },
-    "last_updated": 1525352071
-  },
-  "metadata": {
-    "timestamp": 1525352031,
-    "error": null
+    "last_updated": "2018-09-18T13:52:00.000Z"
   }
 }
 ```
