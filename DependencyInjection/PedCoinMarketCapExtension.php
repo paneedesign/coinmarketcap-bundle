@@ -21,11 +21,5 @@ class PedCoinMarketCapExtension extends Extension
     {
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
-        $configuration = new Configuration();
-        $config = $this->processConfiguration($configuration, $configs);
-
-        if (array_key_exists('api_key', $config)) {
-            $container->setParameter('ped_coin_market_cap.api_key', $config['endpoint']);
-        }
     }
 }
